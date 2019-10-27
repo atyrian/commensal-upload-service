@@ -37,7 +37,7 @@ functions:
     handler: handler.imagePost
     events:
       - http:
-          path: image/upload/{id}
+          path: image/upload/id/{id}
           authorizer:
             name: userAuthorizer
             resultTtlInSeconds: 0

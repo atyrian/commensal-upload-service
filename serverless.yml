@@ -1,0 +1,49 @@
+service: commensal-upload-service
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: eu-west-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:PutObjectAcl
+      Resource:
+        - arn:aws:s3:::commensal-userimages-dev/*
+  environment:
+    REGION: ${self:provider.region}
+    BUCKET_NAME: commensal-userimages-dev
+    BUCKET_ACL: public-read
+    BUCKET_BASEURL: https://commensal-userimages-dev.s3-eu-west-1.amazonaws.com
+    API_BASEURL: https://29xroh6n1e.execute-api.eu-west-1.amazonaws.com/dev
+    SCOPE_ID: ${self:custom.scope}
+package:
+  exclude:
+    - test/**
+
+plugins:
+  - serverless-apigw-binary
+
+custom:
+  scope: co_up
+  apigwBinary:
+    types: #list of mime-types
+      - "multipart/form-data"
+
+functions:
+  imagePost:
+    handler: handler.imagePost
+    events:
+      - http:
+          path: image/upload/{id}
+          authorizer:
+            name: userAuthorizer
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
+          method: post
+          cors: true
+  userAuthorizer:
+    handler: handler.userAuthorizer
